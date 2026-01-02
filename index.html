@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>シンプルマインドマップ</title>
+
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #f3f4f6;
+    margin: 0;
+    padding: 20px;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  h1 {
+    margin-bottom: 10px;
+  }
+
+  .description {
+    font-size: 13px;
+    color: #4b5563;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+
+  .merit {
+    font-size: 12px;
+    color: #4b5563;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px dashed #e5e7eb;
+    padding: 8px 10px;
+    margin-bottom: 16px;
+  }
+
+  #addBtn {
+    padding: 8px 14px;
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-bottom: 16px;
+  }
+
+  #board {
+    position: relative;
+    width: 100%;
+    height: calc(100vh - 190px);
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .node {
+    position: absolute;
+    background: #fff9a8;
+    padding: 8px 12px;
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    cursor: move;
+    user-select: none;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+
+  .node input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    width: 120px;
+  }
+</style>
+</head>
+<body>
+
+<h1>シンプルマインドマップ</h1>
+
+<div class="description">
+  ・ノードを追加して、ドラッグで自由に配置できます。<br>
+  ・内容は自動保存されます。
+</div>
+
+<div class="merit">
+  【このマインドマップのメリット】<br>
+  ・線がないので、まずは思いついたことを気軽に並べられます。<br>
+  ・付箋のように使えるので、グループ分けや整理の自由度が高いです。<br>
+  ・描画が軽く、スマホでも動かしやすいシンプルな作りです。
+</div>
+
+<button id="addBtn">ノードを追加</button>
+
+<div id="board"></div>
+
+<script>
+let nodes = JSON.parse(localStorage.getItem("simpleMindmap") || "[]");
+const board = document.getElementById("board");
+
+/* -----------------------------
+   ノード描画
+----------------------------- */
+function renderNodes() {
+  board.innerHTML = "";
+
+  nodes.forEach((node, index) => {
+    const el = document.createElement("div");
+    el.className = "node";
+    el.style.left = node.x + "px";
+    el.style.top = node.y + "px";
+
+    const input = document.createElement("input");
+    input.value = node.text;
+    input.oninput = () => {
+      nodes[index].text = input.value;
+      save();
+    };
+
+    el.appendChild(input);
+    board.appendChild(el);
+
+    makeDraggable(el, index);
+  });
+}
+
+/* -----------------------------
+   ドラッグ移動
+----------------------------- */
+function makeDraggable(el, index) {
+  let offsetX, offsetY;
+
+  el.addEventListener("mousedown", (e) => {
+    offsetX = e.clientX - el.offsetLeft;
+    offsetY = e.clientY - el.offsetTop;
+
+    function mouseMove(e) {
+      el.style.left = e.clientX - offsetX + "px";
+      el.style.top = e.clientY - offsetY + "px";
+
+      nodes[index].x = e.clientX - offsetX;
+      nodes[index].y = e.clientY - offsetY;
+      save();
+    }
+
+    function mouseUp() {
+      document.removeEventListener("mousemove", mouseMove);
+      document.removeEventListener("mouseup", mouseUp);
+    }
+
+    document.addEventListener("mousemove", mouseMove);
+    document.addEventListener("mouseup", mouseUp);
+  });
+}
+
+/* -----------------------------
+   ノード追加
+----------------------------- */
+document.getElementById("addBtn").addEventListener("click", () => {
+  nodes.push({
+    text: "新しいノード",
+    x: 100 + Math.random() * 200,
+    y: 100 + Math.random() * 200
+  });
+  save();
+  renderNodes();
+});
+
+/* -----------------------------
+   保存
+----------------------------- */
+function save() {
+  localStorage.setItem("simpleMindmap", JSON.stringify(nodes));
+}
+
+/* 初期描画 */
+renderNodes();
+</script>
+
+</body>
+</html>
